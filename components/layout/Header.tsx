@@ -181,11 +181,11 @@ export function Header() {
             ) : (
               <div className="space-y-4">
                 <Button className="w-full" asChild>
-                  <Link href="#">Sign In</Link>
+                  <Link href="/login">Sign In</Link>
                 </Button>
                 <div className="text-center text-sm">
                   New customer?{" "}
-                  <Link href="#" className="text-primary hover:underline">
+                  <Link href="/register" className="text-primary hover:underline">
                     Register
                   </Link>
                 </div>
