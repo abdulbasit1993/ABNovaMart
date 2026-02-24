@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
+import { useSelector } from "react-redux";
 
 // Mock Auth and Cart State for UI demonstration
 const useAuth = () => {
@@ -34,8 +35,12 @@ const useCart = () => {
 };
 
 export function Header() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { count } = useCart();
+
+  const user = useSelector((state: any) => state.user);
+
+  console.log("User data (Header) ===>>> ", user);
 
   //   Sample categories for dropdown
   const categories = [
@@ -105,7 +110,7 @@ export function Header() {
                                 </DropdownMenuSubContent>
                               </DropdownMenuPortal>
                             </DropdownMenuSub>
-                          )
+                          ),
                         )}
                       </DropdownMenuSubContent>
                     </DropdownMenuPortal>
@@ -139,7 +144,7 @@ export function Header() {
                 <span className="font-medium">Account</span>
               </div>
               <span className="text-xs text-muted-foreground">
-                {user ? `Hello, ${user.name}` : "Hello, Sign In"}
+                {user ? `Hello, ${user.firstName}` : "Hello, Sign In"}
               </span>
             </Button>
           </PopoverTrigger>
@@ -150,7 +155,9 @@ export function Header() {
                   <p className="text-xs uppercase text-muted-foreground">
                     Welcome
                   </p>
-                  <p className="font-semibold">{user.name}</p>
+                  <p className="font-semibold">
+                    {user.firstName + " " + user.lastName}
+                  </p>
                 </div>
                 <Separator />
                 <div className="space-y-1">
@@ -185,7 +192,10 @@ export function Header() {
                 </Button>
                 <div className="text-center text-sm">
                   New customer?{" "}
-                  <Link href="/register" className="text-primary hover:underline">
+                  <Link
+                    href="/register"
+                    className="text-primary hover:underline"
+                  >
                     Register
                   </Link>
                 </div>

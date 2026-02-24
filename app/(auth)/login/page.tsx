@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,30 +10,76 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Mail, Lock, ShoppingBag, Loader2 } from "lucide-react";
+import apiService from "@/services/apiService";
+import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/slices/userSlice";
 
 export default function LoginPage() {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    rememberMe: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    console.log("Login submitted:", formData);
+
+    const loginData = {
+      email: formData.email,
+      password: formData.password,
+    };
+
+    try {
+      const resp = await apiService.post("/auth/login", loginData);
+
+      const authToken = resp?.data?.token;
+      const userData = resp?.data?.user;
+      const userRole = resp?.data?.user?.role;
+
+      // Check if user role is USER, otherwise deny access
+      if (userRole && userRole !== "USER") {
+        toast.error("Access denied. Only user accounts are allowed to login.");
+        setIsLoading(false);
+        return;
+      }
+
+      localStorage.setItem("authToken", authToken);
+
+      if (resp?.status === 200 || resp?.status === 201) {
+        toast.success("Login successful");
+
+        dispatch(setUser(userData));
+
+        // Reset form after successful login
+        setFormData({
+          email: "",
+          password: "",
+        });
+
+        // Navigate to home page
+        router.push("/");
+      }
+    } catch (error: any) {
+      console.log("Error logging in: ", error);
+      // Error toast is already handled by apiService interceptor
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Card className="backdrop-blur-xl bg-white/10 border-white/20 shadow-2xl">
       <CardHeader className="text-center space-y-4 pb-2">
         {/* Logo */}
-        <Link href="/" className="inline-flex items-center justify-center gap-2 group">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center gap-2 group"
+        >
           <div className="p-2 rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-colors">
             <ShoppingBag className="h-8 w-8 text-primary" />
           </div>
@@ -40,12 +87,10 @@ export default function LoginPage() {
             AB<span className="text-primary">Nova</span>Mart
           </span>
         </Link>
-        
+
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-white">Welcome</h1>
-          <p className="text-white/60 text-sm">
-            Sign in to continue shopping
-          </p>
+          <p className="text-white/60 text-sm">Sign in to continue shopping</p>
         </div>
       </CardHeader>
 
@@ -113,7 +158,7 @@ export default function LoginPage() {
           </div>
 
           {/* Remember Me */}
-          <div className="flex items-center space-x-2">
+          {/* <div className="flex items-center space-x-2">
             <Checkbox
               id="remember"
               checked={formData.rememberMe}
@@ -128,7 +173,7 @@ export default function LoginPage() {
             >
               Remember me for 30 days
             </Label>
-          </div>
+          </div> */}
 
           {/* Submit Button */}
           <Button

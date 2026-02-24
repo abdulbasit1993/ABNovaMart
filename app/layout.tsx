@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { ReduxProvider } from "@/components/providers/ReduxProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,16 +32,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        {/* Wrap with Cart Context (Provider) */}
+        <ReduxProvider>
+          {/* Wrap with Cart Context (Provider) */}
 
-        {/* Header goes here */}
-        <Header />
+          {/* Header goes here */}
+          <Header />
 
-        {/* Main content area - grows to fill space */}
-        <main className="flex-1">{children}</main>
+          {/* Main content area - grows to fill space */}
+          <main className="flex-1">{children}</main>
 
-        {/* Footer goes here */}
-        <Footer />
+          {/* Footer goes here */}
+          <Footer />
+        </ReduxProvider>
 
         {/* shadcn Toast component */}
         <Toaster position="top-right" toastOptions={{ duration: 4500 }} />

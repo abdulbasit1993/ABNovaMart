@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,69 +19,98 @@ import {
   Loader2,
   Check,
   X,
+  Phone,
 } from "lucide-react";
+import apiService from "@/services/apiService";
+import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/slices/userSlice";
 
 export default function RegisterPage() {
+  const dispatch = useDispatch();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
+    phone: "",
     password: "",
     confirmPassword: "",
-    acceptTerms: false,
   });
 
-  // Password strength checks
-  const passwordChecks = {
-    length: formData.password.length >= 8,
-    uppercase: /[A-Z]/.test(formData.password),
-    lowercase: /[a-z]/.test(formData.password),
-    number: /[0-9]/.test(formData.password),
-  };
-
-  const passwordStrength = Object.values(passwordChecks).filter(Boolean).length;
   const passwordsMatch =
     formData.password === formData.confirmPassword &&
     formData.confirmPassword !== "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.acceptTerms) {
-      alert("Please accept the terms and conditions");
-      return;
-    }
+    // if (!formData.acceptTerms) {
+    //   alert("Please accept the terms and conditions");
+    //   return;
+    // }
     if (!passwordsMatch) {
       alert("Passwords do not match");
       return;
     }
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    console.log("Register submitted:", formData);
-  };
 
-  const getStrengthColor = () => {
-    if (passwordStrength <= 1) return "bg-red-500";
-    if (passwordStrength <= 2) return "bg-orange-500";
-    if (passwordStrength <= 3) return "bg-yellow-500";
-    return "bg-green-500";
-  };
+    // Call Register API
+    // console.log("Register data submitted: ", formData);
 
-  const getStrengthText = () => {
-    if (passwordStrength <= 1) return "Weak";
-    if (passwordStrength <= 2) return "Fair";
-    if (passwordStrength <= 3) return "Good";
-    return "Strong";
+    const registerData = {
+      email: formData.email,
+      password: formData.password,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone,
+      role: "USER",
+    };
+
+    try {
+      const resp = await apiService.post("/auth/register", registerData);
+
+      const authToken = resp?.data?.token;
+      const userData = resp?.data?.user;
+      localStorage.setItem("authToken", authToken);
+
+      if (resp?.status === 200 || resp?.status === 201) {
+        toast.success("User registered successfully");
+
+        dispatch(setUser(userData));
+
+        // Reset form after successful registration
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          password: "",
+          confirmPassword: "",
+        });
+
+        // Navigate to home page after successful registration
+        router.push("/");
+      }
+    } catch (error: any) {
+      console.log("Error registering user: ", error);
+      // Error toast is already handled by apiService interceptor
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Card className="backdrop-blur-xl bg-white/10 border-white/20 shadow-2xl">
       <CardHeader className="text-center space-y-4 pb-2">
         {/* Logo */}
-        <Link href="/" className="inline-flex items-center justify-center gap-2 group">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center gap-2 group"
+        >
           <div className="p-2 rounded-xl bg-primary/20 group-hover:bg-primary/30 transition-colors">
             <ShoppingBag className="h-8 w-8 text-primary" />
           </div>
@@ -99,21 +129,42 @@ export default function RegisterPage() {
 
       <CardContent className="pt-4">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name Field */}
+          {/* First Name Field */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-white/80">
-              Full Name
+            <Label htmlFor="firstName" className="text-white/80">
+              First Name
             </Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
               <Input
-                id="name"
+                id="firstName"
                 type="text"
-                placeholder="John Doe"
+                placeholder="John"
                 required
-                value={formData.name}
+                value={formData.firstName}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
+                className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-primary focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          {/* Last Name Field */}
+          <div className="space-y-2">
+            <Label htmlFor="lastName" className="text-white/80">
+              Last Name
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+              <Input
+                id="lastName"
+                type="text"
+                placeholder="Doe"
+                required
+                value={formData.lastName}
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
                 }
                 className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-primary focus:ring-primary/30"
               />
@@ -135,6 +186,27 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
+                }
+                className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-primary focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          {/* Phone Number Field */}
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-white/80">
+              Phone Number
+            </Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1 (555) 000-0000"
+                required
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
                 }
                 className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/40 focus:border-primary focus:ring-primary/30"
               />
@@ -171,60 +243,6 @@ export default function RegisterPage() {
                 )}
               </button>
             </div>
-
-            {/* Password Strength Indicator */}
-            {formData.password && (
-              <div className="space-y-2">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        passwordStrength >= level
-                          ? getStrengthColor()
-                          : "bg-white/20"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-white/60">
-                  Password strength:{" "}
-                  <span
-                    className={`font-medium ${
-                      passwordStrength === 4
-                        ? "text-green-400"
-                        : passwordStrength >= 3
-                        ? "text-yellow-400"
-                        : "text-red-400"
-                    }`}
-                  >
-                    {getStrengthText()}
-                  </span>
-                </p>
-                <div className="grid grid-cols-2 gap-1 text-xs">
-                  {Object.entries({
-                    "8+ characters": passwordChecks.length,
-                    "Uppercase": passwordChecks.uppercase,
-                    "Lowercase": passwordChecks.lowercase,
-                    "Number": passwordChecks.number,
-                  }).map(([label, met]) => (
-                    <div
-                      key={label}
-                      className={`flex items-center gap-1 ${
-                        met ? "text-green-400" : "text-white/40"
-                      }`}
-                    >
-                      {met ? (
-                        <Check className="h-3 w-3" />
-                      ) : (
-                        <X className="h-3 w-3" />
-                      )}
-                      {label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Confirm Password Field */}
@@ -247,8 +265,8 @@ export default function RegisterPage() {
                   formData.confirmPassword && !passwordsMatch
                     ? "border-red-500/50"
                     : formData.confirmPassword && passwordsMatch
-                    ? "border-green-500/50"
-                    : ""
+                      ? "border-green-500/50"
+                      : ""
                 }`}
               />
               <button
@@ -283,7 +301,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Terms and Conditions */}
-          <div className="flex items-start space-x-2">
+          {/* <div className="flex items-start space-x-2">
             <Checkbox
               id="terms"
               checked={formData.acceptTerms}
@@ -311,13 +329,13 @@ export default function RegisterPage() {
                 Privacy Policy
               </Link>
             </Label>
-          </div>
+          </div> */}
 
           {/* Submit Button */}
           <Button
             type="submit"
             className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
-            disabled={isLoading || !formData.acceptTerms}
+            disabled={isLoading}
           >
             {isLoading ? (
               <>
