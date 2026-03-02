@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
+import { BASE_URL } from "@/constants/apiUrl";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,11 +23,17 @@ export const metadata: Metadata = {
     "Your one-stop shop for all your needs. E-Commerce store built with Next.js and Tailwind CSS.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const categoryData = await fetch(`${BASE_URL}/product-categories`)
+    .then((res) => res.json())
+    .catch((err) => console.log("Cannot fetch categories: ", err));
+
+  console.log("Categories: ", categoryData);
+
   return (
     <html lang="en" className="scroll-smooth">
       <body
@@ -36,7 +43,7 @@ export default function RootLayout({
           {/* Wrap with Cart Context (Provider) */}
 
           {/* Header goes here */}
-          <Header />
+          <Header categoryData={categoryData?.categories} />
 
           {/* Main content area - grows to fill space */}
           <main className="flex-1">{children}</main>

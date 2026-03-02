@@ -4,4 +4,5 @@ const apiUrls = {
   production: "https://abnovamart-backend.onrender.com/api",
 };
 
-export const BASE_URL = apiUrls.production;
+export const BASE_URL =
+  process.env.NODE_ENV === "development" ? apiUrls.local : apiUrls.production;

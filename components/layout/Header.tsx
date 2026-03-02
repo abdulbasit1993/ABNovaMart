@@ -34,27 +34,73 @@ const useCart = () => {
   return { count: 3 }; // Mock 3 items in cart
 };
 
-export function Header() {
-  // const { user } = useAuth();
+type Category = {
+  _id: string;
+  name: string;
+  slug: string;
+  parentId?: string;
+};
+
+type CategoryNode = Category & {
+  children: CategoryNode[];
+};
+
+type HeaderProps = {
+  categoryData?: Category[];
+};
+
+const buildCategoryTree = (categories: Category[] = []): CategoryNode[] => {
+  const nodeMap = new Map<string, CategoryNode>();
+  const roots: CategoryNode[] = [];
+
+  categories.forEach((cat) => {
+    nodeMap.set(cat._id, { ...cat, children: [] });
+  });
+
+  nodeMap.forEach((node) => {
+    if (node.parentId) {
+      const parent = nodeMap.get(node.parentId);
+      if (parent) {
+        parent.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    } else {
+      roots.push(node);
+    }
+  });
+
+  return roots;
+};
+
+const renderCategoryNode = (node: CategoryNode) => {
+  if (node.children.length > 0) {
+    return (
+      <DropdownMenuSub key={node._id}>
+        <DropdownMenuSubTrigger>{node.name}</DropdownMenuSubTrigger>
+        <DropdownMenuPortal>
+          <DropdownMenuSubContent>
+            {node.children.map((child) => renderCategoryNode(child))}
+          </DropdownMenuSubContent>
+        </DropdownMenuPortal>
+      </DropdownMenuSub>
+    );
+  }
+
+  return (
+    <DropdownMenuItem key={node._id}>
+      <Link href={`/category/${node.slug}`}>{node.name}</Link>
+    </DropdownMenuItem>
+  );
+};
+
+export function Header({ categoryData }: HeaderProps) {
+
   const { count } = useCart();
 
   const user = useSelector((state: any) => state.user);
 
-  console.log("User data (Header) ===>>> ", user);
-
-  //   Sample categories for dropdown
-  const categories = [
-    {
-      name: "Electronics",
-      subCat: [
-        { name: "Mobile Phones", sub: ["Smartphones", "Feature Phones"] },
-        { name: "Laptops", sub: ["Macbook", "Windows", "Chromebook"] },
-        "Accessories",
-      ],
-    },
-    { name: "Fashion", subCat: ["Men", "Women", "Kids"] },
-    { name: "Home & Living" },
-  ];
+  const categoryTree = buildCategoryTree(categoryData ?? []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -77,53 +123,15 @@ export function Header() {
             align="start"
             className="w-64 max-h-96 overflow-y-auto"
           >
-            {categories.map((cat) => (
-              <DropdownMenuGroup key={cat.name}>
-                {Array.isArray(cat.subCat) ? (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>{cat.name}</DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent>
-                        {cat.subCat.map((sub) =>
-                          typeof sub === "string" ? (
-                            <DropdownMenuItem key={sub}>
-                              <Link href={`/category/${sub.toLowerCase()}`}>
-                                {sub}
-                              </Link>
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuSub key={sub.name}>
-                              <DropdownMenuSubTrigger>
-                                {sub.name}
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                  {sub.sub.map((deep) => (
-                                    <DropdownMenuItem key={deep}>
-                                      <Link
-                                        href={`/category/${deep.toLowerCase()}`}
-                                      >
-                                        {deep}
-                                      </Link>
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuSubContent>
-                              </DropdownMenuPortal>
-                            </DropdownMenuSub>
-                          ),
-                        )}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                ) : (
-                  <DropdownMenuItem>
-                    <Link href={`/category/${cat.name.toLowerCase()}`}>
-                      {cat.name}
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuGroup>
-            ))}
+            {categoryTree.length ? (
+              categoryTree.map((root) => (
+                <DropdownMenuGroup key={root._id}>
+                  {renderCategoryNode(root)}
+                </DropdownMenuGroup>
+              ))
+            ) : (
+              <DropdownMenuItem disabled>No categories available</DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -144,12 +152,12 @@ export function Header() {
                 <span className="font-medium">Account</span>
               </div>
               <span className="text-xs text-muted-foreground">
-                {user ? `Hello, ${user.firstName}` : "Hello, Sign In"}
+                {user?.id ? `Hello, ${user.firstName}` : "Hello, Sign In"}
               </span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-64 p-4" align="end">
-            {user ? (
+            {user?.id ? (
               <div className="space-y-4">
                 <div className="text-center">
                   <p className="text-xs uppercase text-muted-foreground">
