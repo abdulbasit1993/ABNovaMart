@@ -14,6 +14,8 @@ import apiService from "@/services/apiService";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/slices/userSlice";
+import { setCartFromApi } from "@/redux/slices/cartSlice";
+import { fetchCart } from "@/services/cartService";
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -54,6 +56,10 @@ export default function LoginPage() {
         toast.success("Login successful");
 
         dispatch(setUser(userData));
+
+        // Sync cart from API so header count and cart page stay in sync
+        const cartData = await fetchCart();
+        if (cartData) dispatch(setCartFromApi(cartData));
 
         // Reset form after successful login
         setFormData({

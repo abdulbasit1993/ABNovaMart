@@ -25,6 +25,8 @@ import apiService from "@/services/apiService";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/redux/slices/userSlice";
+import { setCartFromApi } from "@/redux/slices/cartSlice";
+import { fetchCart } from "@/services/cartService";
 
 export default function RegisterPage() {
   const dispatch = useDispatch();
@@ -80,6 +82,10 @@ export default function RegisterPage() {
         toast.success("User registered successfully");
 
         dispatch(setUser(userData));
+
+        // Sync cart from API so header count and cart page stay in sync
+        const cartData = await fetchCart();
+        if (cartData) dispatch(setCartFromApi(cartData));
 
         // Reset form after successful registration
         setFormData({

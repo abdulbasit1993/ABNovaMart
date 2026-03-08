@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { ShoppingCart, Menu, Search, User } from "lucide-react";
 import { Button } from "../ui/button";
@@ -23,16 +23,6 @@ import { Badge } from "../ui/badge";
 import { Separator } from "../ui/separator";
 import { useSelector } from "react-redux";
 
-// Mock Auth and Cart State for UI demonstration
-const useAuth = () => {
-  const [user, setUser] = useState<{ name: string } | null>(null);
-  const logout = () => setUser(null);
-  return { user, login: () => setUser({ name: "John Doe" }), logout };
-};
-
-const useCart = () => {
-  return { count: 3 }; // Mock 3 items in cart
-};
 
 type Category = {
   _id: string;
@@ -95,10 +85,12 @@ const renderCategoryNode = (node: CategoryNode) => {
 };
 
 export function Header({ categoryData }: HeaderProps) {
-
-  const { count } = useCart();
-
   const user = useSelector((state: any) => state.user);
+  const cart = useSelector((state: any) => state.cart);
+  const count =
+    cart?.summary?.totalQuantity ??
+    cart?.cartItems?.reduce((s: number, i: { quantity: number }) => s + i.quantity, 0) ??
+    0;
 
   const categoryTree = buildCategoryTree(categoryData ?? []);
 

@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
+import { CartHydrator } from "@/components/providers/CartHydrator";
 import { BASE_URL } from "@/constants/apiUrl";
 
 const geistSans = Geist({
@@ -40,8 +41,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <ReduxProvider>
-          {/* Wrap with Cart Context (Provider) */}
-
+          <CartHydrator />
           {/* Header goes here */}
           <Header categoryData={categoryData?.categories} />
 
