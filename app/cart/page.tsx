@@ -28,6 +28,8 @@ export default function CartPage() {
   const { cartItems, summary, loading } = cart;
   const [isClearing, setIsClearing] = useState(false);
 
+  console.log("cartItems ==>> ", cartItems);
+
   useEffect(() => {
     if (!user?.id) return;
     // Sync cart from API when cart not yet loaded (e.g. direct navigate to /cart)
@@ -147,7 +149,7 @@ export default function CartPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span className="font-medium">
-                      Rs {subtotal.toLocaleString()}
+                      ${subtotal.toLocaleString()}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -157,7 +159,7 @@ export default function CartPage() {
                   <div className="flex justify-between text-base font-semibold">
                     <span>Total</span>
                     <span className="text-primary">
-                      Rs {subtotal.toLocaleString()}
+                      ${subtotal.toLocaleString()}
                     </span>
                   </div>
                   <Button
@@ -182,10 +184,16 @@ export default function CartPage() {
 
 function CartItemRow({ item }: { item: CartItem }) {
   const dispatch = useDispatch();
+
+  const price =
+    typeof item.price === "object" && item.price !== null
+      ? parseFloat((item.price as any).$numberDecimal)
+      : Number(item.price);
+
   const [quantity, setQuantity] = useState(item.quantity);
 
   const imageUrl = item.image ?? "/placeholder-product.png";
-  const lineTotal = item.price * item.quantity;
+  const lineTotal = price * quantity;
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -216,7 +224,7 @@ function CartItemRow({ item }: { item: CartItem }) {
               {item.name ?? `Product ${item.productId}`}
             </Link>
             <p className="mt-1 text-sm text-muted-foreground">
-              Rs {item.price.toLocaleString()} each
+              ${price.toLocaleString()} each
             </p>
             <div className="mt-2 flex items-center gap-2">
               <label
@@ -238,7 +246,7 @@ function CartItemRow({ item }: { item: CartItem }) {
               />
             </div>
             <p className="mt-3 font-semibold text-primary">
-              Rs {lineTotal.toLocaleString()}
+              ${lineTotal.toLocaleString()}
             </p>
           </div>
         </div>

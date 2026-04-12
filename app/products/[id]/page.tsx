@@ -46,9 +46,7 @@ export default async function ProductDetailPage({
 
   const priceValue = getProductPrice(product.price);
   const displayPrice =
-    priceValue > 0
-      ? `Rs ${priceValue.toLocaleString()}`
-      : "Price not available";
+    priceValue > 0 ? `$${priceValue.toLocaleString()}` : "Price not available";
 
   const imageUrl =
     product.images && product.images.length > 0
@@ -98,4 +96,3 @@ export default async function ProductDetailPage({
     </section>
   );
 }
-
