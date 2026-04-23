@@ -157,7 +157,7 @@ export default function CartPage() {
                   </p>
                   <Separator />
                   <div className="flex justify-between text-base font-semibold">
-                    <span>Total</span>
+                    <span>Estimated Total</span>
                     <span className="text-primary">
                       ${subtotal.toLocaleString()}
                     </span>
