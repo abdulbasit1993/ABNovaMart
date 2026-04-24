@@ -19,6 +19,7 @@ import {
 import { fetchCart, clearCart as clearCartApi } from "@/services/cartService";
 import type { RootState } from "@/redux/store";
 import type { CartItem } from "@/redux/slices/cartSlice";
+import QuantityStepper from "@/components/QuantityStepper";
 
 export default function CartPage() {
   const router = useRouter();
@@ -226,23 +227,15 @@ function CartItemRow({ item }: { item: CartItem }) {
             <p className="mt-1 text-sm text-muted-foreground">
               ${price.toLocaleString()} each
             </p>
-            <div className="mt-2 flex items-center gap-2">
-              <label
-                htmlFor={`qty-${item.productId}`}
-                className="text-sm text-muted-foreground"
-              >
-                Qty:
-              </label>
-              <Input
-                id={`qty-${item.productId}`}
-                type="number"
-                min="1"
+            <div className="mt-2 flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">Qty:</span>
+
+              <QuantityStepper
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                onBlur={() =>
-                  quantity !== item.quantity && handleQuantityChange(quantity)
-                }
-                className="w-20 h-8"
+                onChange={(newQty) => {
+                  handleQuantityChange(newQty);
+                  setQuantity(newQty);
+                }}
               />
             </div>
             <p className="mt-3 font-semibold text-primary">

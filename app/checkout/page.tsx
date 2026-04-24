@@ -14,6 +14,14 @@ export default function CheckoutPage() {
 
   const totalItems = cart?.summary?.totalQuantity || 0;
 
+  useEffect(() => {
+    if (!user?.id) {
+      router.replace("/login");
+    }
+  }, [user, router]);
+
+  if (!user?.id) return null;
+
   if (!cart?.cartItems?.length) {
     return (
       <section className="bg-background py-10 md:py-16">
@@ -31,12 +39,6 @@ export default function CheckoutPage() {
       </section>
     );
   }
-
-  useEffect(() => {
-    if (!user?.id) {
-      router.replace("/login");
-    }
-  }, [user, router]);
 
   if (!user?.id) return null;
 
