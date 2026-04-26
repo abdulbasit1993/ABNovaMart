@@ -44,8 +44,8 @@ interface CartItemRowProps {
 function CartItemRow({ item }: CartItemRowProps) {
   console.log("CartItemRow item: ", item);
   const price =
-    typeof item.price === "object" && item.price?.$numberDecimal
-      ? parseFloat(item.price.$numberDecimal)
+    typeof item.price === "object" && (item.price as any)?.$numberDecimal
+      ? parseFloat((item.price as any).$numberDecimal)
       : item.price || 0;
 
   return (
