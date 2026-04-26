@@ -1,5 +1,6 @@
 import apiService from "./apiService";
 import type { CartApiPayload } from "@/redux/slices/cartSlice";
+import { BASE_URL } from "@/constants/apiUrl";
 
 export type CartApiResponse = {
   success: boolean;
@@ -58,28 +59,6 @@ export async function addToCart(
 }
 
 /**
- * Updates an item's quantity in the cart via PUT /cart/items/:productId.
- */
-export async function updateCartItemQuantity(
-  productId: string,
-  quantity: number,
-): Promise<CartApiPayload | null> {
-  try {
-    const res = await apiService.put<CartApiResponse>(
-      `/cart/items/${productId}`,
-      { quantity },
-    );
-    if (res.data?.success && res.data?.data) {
-      return res.data.data;
-    }
-    return null;
-  } catch (error) {
-    console.error("Error updating cart item:", error);
-    return null;
-  }
-}
-
-/**
  * Removes an item from the cart via DELETE /cart/items/:productId.
  */
 export async function removeCartItem(
@@ -98,6 +77,18 @@ export async function removeCartItem(
     return null;
   }
 }
+
+export const updateCartItem = async (productId: string, quantity: number) => {
+  try {
+    const res = await apiService.patch(`/cart/items/${productId}`, {
+      quantity: quantity,
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error updating cart item: ", err);
+    return null;
+  }
+};
 
 /**
  * Clears the entire cart via DELETE /cart.

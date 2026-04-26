@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,7 +16,11 @@ import {
   updateItemQuantity,
   clearCart,
 } from "@/redux/slices/cartSlice";
-import { fetchCart, clearCart as clearCartApi } from "@/services/cartService";
+import {
+  fetchCart,
+  clearCart as clearCartApi,
+  updateCartItem,
+} from "@/services/cartService";
 import type { RootState } from "@/redux/store";
 import type { CartItem } from "@/redux/slices/cartSlice";
 import QuantityStepper from "@/components/QuantityStepper";
@@ -28,8 +32,6 @@ export default function CartPage() {
   const cart = useSelector((state: RootState) => state.cart);
   const { cartItems, summary, loading } = cart;
   const [isClearing, setIsClearing] = useState(false);
-
-  console.log("cartItems ==>> ", cartItems);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -185,6 +187,7 @@ export default function CartPage() {
 
 function CartItemRow({ item }: { item: CartItem }) {
   const dispatch = useDispatch();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const price =
     typeof item.price === "object" && item.price !== null
@@ -202,7 +205,29 @@ function CartItemRow({ item }: { item: CartItem }) {
       updateItemQuantity({ productId: item.productId, quantity: newQuantity }),
     );
     setQuantity(newQuantity);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      const res = await updateCartItem(item.productId, newQuantity);
+
+      console.log("response Updated cart item: ", res);
+
+      if (!res?.success) {
+        toast.error("Failed to update cart");
+      }
+    }, 600);
   };
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Card>
