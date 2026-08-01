@@ -2,15 +2,20 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import apiService from "@/services/apiService";
+import {
+  restoreCartAfterCheckoutFailure,
+  saveCheckoutCartSnapshot,
+} from "@/services/cartCheckoutRecovery";
 import OrderSummary from "./OrderSummary";
 import AddressSection, { AddressPayload } from "./AddressSection";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user);
   const cart = useSelector((state: any) => state.cart);
 
@@ -54,6 +59,8 @@ export default function CheckoutPage() {
       billingId: string | null,
       sameAsShipping: boolean,
     ) => {
+      saveCheckoutCartSnapshot(cart.cartItems ?? []);
+
       try {
         const checkoutBody: Record<string, any> = {
           shippingAddressId: shippingId,
@@ -69,18 +76,22 @@ export default function CheckoutPage() {
 
         const { clientSecret, order } = response?.data;
 
-        if (response?.success) {
+        if (response?.success && clientSecret && order?._id) {
           router.push(
-            `/payment?clientSecret=${clientSecret}&orderId=${order?._id}`,
+            `/payment?clientSecret=${clientSecret}&orderId=${order._id}`,
           );
+          return;
         }
+
+        await restoreCartAfterCheckoutFailure(dispatch);
       } catch (err) {
         console.error("Checkout failed:", err);
+        await restoreCartAfterCheckoutFailure(dispatch);
       } finally {
         setIsPlacingOrder(false);
       }
     },
-    [router],
+    [cart.cartItems, dispatch, router],
   );
 
   const handleValidationResult = useCallback(
@@ -159,15 +170,22 @@ export default function CheckoutPage() {
                 billingId,
                 currentPayload.sameAsShipping,
               );
+            } else {
+              setIsPlacingOrder(false);
+              toast.error("Could not save your address. Please try again.");
             }
+          } else {
+            setIsPlacingOrder(false);
+            toast.error("Could not save your address. Please try again.");
           }
         }
       } catch (err) {
         console.error("Checkout flow failed:", err);
+        await restoreCartAfterCheckoutFailure(dispatch);
         setIsPlacingOrder(false);
       }
     },
-    [performCheckout],
+    [performCheckout, dispatch],
   );
 
   const handleConfirmCheckout = () => {

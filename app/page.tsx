@@ -47,16 +47,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20" />
         <div className="container relative z-10 py-24 md:py-32 lg:py-40 text-center">
           <Badge className="mb-6 bg-white/20 text-white border-white/30 backdrop-blur">
-            New Collection 2025
+            Online Marketplace
           </Badge>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-            Discover Your
+            Everything You Need,
             <br />
-            <span className="text-indigo-200">Perfect Style</span>
+            <span className="text-indigo-200">All in One Place</span>
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-white/90">
-            Explore our curated collection of premium products. From electronics
-            to fashion, find everything you need with unbeatable prices.
+            Browse a diverse collection of products designed to suit every
+            lifestyle. Shop confidently with a clean, modern, and seamless
+            shopping experience.
           </p>
         </div>
       </section>

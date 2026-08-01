@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { toast } from "sonner";
+import {
+  completeCheckoutCartCleanup,
+  restoreCartAfterCheckoutFailure,
+} from "@/services/cartCheckoutRecovery";
 
 export default function CheckoutForm({
   clientSecret,
@@ -10,6 +16,7 @@ export default function CheckoutForm({
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [loading, setLoading] = useState(false);
 
@@ -41,8 +48,10 @@ export default function CheckoutForm({
     setLoading(true);
 
     const cardElement = elements.getElement(CardElement);
-
-    console.log("CARD ELEMENT:", cardElement);
+    if (!cardElement) {
+      setLoading(false);
+      return;
+    }
 
     const result = await stripe.confirmCardPayment(clientSecret, {
       payment_method: {
@@ -50,8 +59,22 @@ export default function CheckoutForm({
       },
     });
 
-    console.log("PAYMENT RESULT:", result);
+    if (result.error) {
+      console.error(result.error.message);
+      await restoreCartAfterCheckoutFailure(dispatch);
+      toast.error(result.error.message ?? "Payment failed. Your cart has been restored.");
+      setLoading(false);
+      return;
+    }
 
+    if (result.paymentIntent?.status === "succeeded") {
+      completeCheckoutCartCleanup(dispatch);
+      router.push("/payment/success");
+      return;
+    }
+
+    await restoreCartAfterCheckoutFailure(dispatch);
+    toast.error("Payment could not be completed. Your cart has been restored.");
     setLoading(false);
   };
 

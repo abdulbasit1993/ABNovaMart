@@ -1,10 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { completeCheckoutCartCleanup } from "@/services/cartCheckoutRecovery";
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    completeCheckoutCartCleanup(dispatch);
+  }, [dispatch]);
 
   return (
     <section className="py-16 text-center">

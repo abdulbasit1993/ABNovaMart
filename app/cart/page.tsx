@@ -21,6 +21,10 @@ import {
   clearCart as clearCartApi,
   updateCartItem,
 } from "@/services/cartService";
+import {
+  restoreCartAfterCheckoutFailure,
+  clearCheckoutCartSnapshot,
+} from "@/services/cartCheckoutRecovery";
 import type { RootState } from "@/redux/store";
 import type { CartItem } from "@/redux/slices/cartSlice";
 import QuantityStepper from "@/components/QuantityStepper";
@@ -35,9 +39,20 @@ export default function CartPage() {
 
   useEffect(() => {
     if (!user?.id) return;
-    // Sync cart from API when cart not yet loaded (e.g. direct navigate to /cart)
-    fetchCart().then((data) => {
-      if (data) dispatch(setCartFromApi(data));
+
+    fetchCart().then(async (data) => {
+      if (!data) return;
+
+      if (data.items.length === 0) {
+        await restoreCartAfterCheckoutFailure(dispatch);
+        const refreshed = await fetchCart();
+        if (refreshed) {
+          dispatch(setCartFromApi(refreshed));
+        }
+        return;
+      }
+
+      dispatch(setCartFromApi(data));
     });
   }, [user?.id, dispatch]);
 
@@ -55,6 +70,7 @@ export default function CartPage() {
       const success = await clearCartApi();
       if (success) {
         dispatch(clearCart());
+        clearCheckoutCartSnapshot();
         toast.success("Cart cleared successfully");
       } else {
         toast.error("Failed to clear cart");
