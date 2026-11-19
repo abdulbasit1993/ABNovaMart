@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Product, ProductCard } from "@/components/products/ProductCard";
+import { BASE_URL } from "@/constants/apiUrl";
 
 // ------------------ Dummy data -----------------
 type DummyCategory = {
@@ -54,16 +55,28 @@ type CategoryPageProps = {
     params: Promise<{ slug: string }>;
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params }: { params: Promise<{ slug: string }>}) {
     const { slug } = await params;
 
-    const category = DUMMY_CATEGORIES.find((cat) => cat.slug === slug);
+    const categoriesRes = await fetch(`${BASE_URL}/product-categories`, { cache: 'no-store'})
+    .then((r) => r.json())
+    .catch(() => null);
+
+    const category = categoriesRes?.categories?.find(
+        (cat: { _id: string; name: string; slug: string}) => cat.slug === slug
+    );
 
     if (!category) {
         notFound();
     }
 
-    const products = DUMMY_PRODUCTS;
+    const productsRes = await fetch(`${BASE_URL}/products?categoryId=${category._id}`, {
+        cache: "no-store"
+    })
+    .then((r) => r.json())
+    .catch(() => null);
+
+    const products = productsRes?.data ?? [];
 
     return (
         <div className="bg-background">
